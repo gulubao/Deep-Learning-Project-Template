@@ -15,7 +15,7 @@ import torch.nn.functional as F
 sys.path.append('.')
 from config import cfg
 from data import make_data_loader
-from engine.example_trainer import do_train
+from engine.trainer import do_train
 from modeling import build_model
 from solver import make_optimizer
 
