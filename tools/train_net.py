@@ -3,6 +3,7 @@
 Template follow:
     https://github.com/L1aoXingyu/Deep-Learning-Project-Template
     https://github.com/lyuwenyu/RT-DETR/tree/main/rtdetr_pytorch
+    https://github.com/yuanzhoulvpi2017/vscode_debug_transformers
 """
 
 import argparse
@@ -89,5 +90,5 @@ if __name__ == '__main__':
         debugpy.wait_for_client()
     except Exception as e:
         pass
-    
+
     main()
