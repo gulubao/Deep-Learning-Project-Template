@@ -5,7 +5,7 @@ Template follow:
     https://github.com/lyuwenyu/RT-DETR/tree/main/rtdetr_pytorch
 """
 
-from .example_model import ResNet18
+from .model import ResNet18
 
 
 def build_model(cfg):
