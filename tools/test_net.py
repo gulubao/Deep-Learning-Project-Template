@@ -14,7 +14,7 @@ from os import mkdir
 import torch
 
 sys.path.append('.')
-from config import cfg
+from config import args
 from data import make_data_loader
 from engine.inference import inference
 from modeling import build_model
@@ -34,11 +34,11 @@ def main():
     num_gpus = int(os.environ["WORLD_SIZE"]) if "WORLD_SIZE" in os.environ else 1
 
     if args.config_file != "":
-        cfg.merge_from_file(args.config_file)
-    cfg.merge_from_list(args.opts)
-    cfg.freeze()
+        args.merge_from_file(args.config_file)
+    args.merge_from_list(args.opts)
+    args.freeze()
 
-    output_dir = cfg.OUTPUT_DIR
+    output_dir = args.OUTPUT_DIR
     if output_dir and not os.path.exists(output_dir):
         mkdir(output_dir)
 
@@ -51,13 +51,13 @@ def main():
         with open(args.config_file, 'r') as cf:
             config_str = "\n" + cf.read()
             logger.info(config_str)
-    logger.info("Running with config:\n{}".format(cfg))
+    logger.info("Running with config:\n{}".format(args))
 
-    model = build_model(cfg)
-    model.load_state_dict(torch.load(cfg.TEST.WEIGHT))
-    val_loader = make_data_loader(cfg, is_train=False)
+    model = build_model(args)
+    model.load_state_dict(torch.load(args.TEST.WEIGHT))
+    val_loader = make_data_loader(args, is_train=False)
 
-    inference(cfg, model, val_loader)
+    inference(args, model, val_loader)
 
 
 if __name__ == '__main__':

@@ -22,8 +22,8 @@ In a nutshell here's how to use this template, so **for example** assume you wan
 ```python
 from .example_model import ResNet18
 
-def build_model(cfg):
-    model = ResNet18(cfg.MODEL.NUM_CLASSES)
+def build_model(args):
+    model = ResNet18(args.MODEL.NUM_CLASSES)
     return model
 ``` 
 
@@ -32,7 +32,7 @@ def build_model(cfg):
 
 ```python
 # trainer
-def do_train(cfg, model, train_loader, val_loader, optimizer, scheduler, loss_fn):
+def do_train(args, model, train_loader, val_loader, optimizer, scheduler, loss_fn):
  """
  implement the logic of epoch:
  -loop on the number of iterations in the config and call the train step
@@ -41,7 +41,7 @@ def do_train(cfg, model, train_loader, val_loader, optimizer, scheduler, loss_fn
 pass
 
 # inference
-def inference(cfg, model, val_loader):
+def inference(args, model, val_loader):
 """
 implement the logic of the train step
 - run the tensorflow session
@@ -53,20 +53,20 @@ pass
 - In `tools`  folder, you create the `train.py` .  In this file, you need to get the instances of the following objects "Model",  "DataLoader”, “Optimizer”, and config
 ```python
 # create instance of the model you want
-model = build_model(cfg)
+model = build_model(args)
 
 # create your data generator
-train_loader = make_data_loader(cfg, is_train=True)
-val_loader = make_data_loader(cfg, is_train=False)
+train_loader = make_data_loader(args, is_train=True)
+val_loader = make_data_loader(args, is_train=False)
 
 # create your model optimizer
-optimizer = make_optimizer(cfg, model)
+optimizer = make_optimizer(args, model)
 ```
 
 - Pass the all these objects to the function `do_train` , and start your training
 ```python
 # here you train your model
-do_train(cfg, model, train_loader, val_loader, optimizer, None, F.cross_entropy)
+do_train(args, model, train_loader, val_loader, optimizer, None, F.cross_entropy)
 ```
 
 **You will find a template file and a simple example in the model and trainer folder that shows you how to try your first model simply.**

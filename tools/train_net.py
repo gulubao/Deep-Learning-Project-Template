@@ -7,6 +7,8 @@ Template follow:
 """
 
 import argparse
+from config.defaults import default_parser
+from config.config_utils import merge_from_yaml, merge_additional_args
 import os
 import sys
 from os import mkdir
@@ -14,7 +16,6 @@ from os import mkdir
 import torch.nn.functional as F
 
 sys.path.append('.')
-from config import cfg
 from data import make_data_loader
 from engine.trainer import do_train
 from modeling import build_model
@@ -23,20 +24,20 @@ from solver import make_optimizer
 from utils.logger import setup_logger
 
 
-def train(cfg):
-    model = build_model(cfg)
-    device = cfg.MODEL.DEVICE
+def train(args):
+    model = build_model(args)
+    device = args.device
 
-    optimizer = make_optimizer(cfg, model)
+    optimizer = make_optimizer(args, model)
     scheduler = None
 
     arguments = {}
 
-    train_loader = make_data_loader(cfg, is_train=True)
-    val_loader = make_data_loader(cfg, is_train=False)
+    train_loader = make_data_loader(args, is_train=True)
+    val_loader = make_data_loader(args, is_train=False)
 
     do_train(
-        cfg,
+        args,
         model,
         train_loader,
         val_loader,
@@ -47,23 +48,15 @@ def train(cfg):
 
 
 def main():
-    parser = argparse.ArgumentParser(description="PyTorch Template MNIST Training")
-    parser.add_argument(
-        "--config_file", default="", help="path to config file", type=str
-    )
-    parser.add_argument("opts", help="Modify config options using the command-line", default=None,
-                        nargs=argparse.REMAINDER)
-
-    args = parser.parse_args()
+    args = default_parser()
+    args = merge_from_yaml(args)
 
     num_gpus = int(os.environ["WORLD_SIZE"]) if "WORLD_SIZE" in os.environ else 1
 
     if args.config_file != "":
-        cfg.merge_from_file(args.config_file)
-    cfg.merge_from_list(args.opts)
-    cfg.freeze()
+        args.merge_from_file(args.config_file)
 
-    output_dir = cfg.OUTPUT_DIR
+    output_dir = args.output_dir
     if output_dir and not os.path.exists(output_dir):
         mkdir(output_dir)
 
@@ -76,9 +69,9 @@ def main():
         with open(args.config_file, 'r') as cf:
             config_str = "\n" + cf.read()
             logger.info(config_str)
-    logger.info("Running with config:\n{}".format(cfg))
+    logger.info("Running with config:\n{}".format(args))
 
-    train(cfg)
+    train(args)
 
 
 if __name__ == '__main__':

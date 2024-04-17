@@ -8,11 +8,11 @@ Template follow:
 import logging
 
 def inference(
-        cfg,
+        args,
         model,
         val_loader
 ):
-    device = cfg.MODEL.DEVICE
+    device = args.MODEL.DEVICE
 
     logger = logging.getLogger("template_model.inference")
     logger.info("Start inferencing")

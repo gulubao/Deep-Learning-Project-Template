@@ -9,6 +9,6 @@ Template follow:
 from .model import ResNet18
 
 
-def build_model(cfg):
-    model = ResNet18(cfg.MODEL.NUM_CLASSES)
+def build_model(args):
+    model = ResNet18(args.MODEL.NUM_CLASSES)
     return model

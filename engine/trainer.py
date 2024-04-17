@@ -11,7 +11,7 @@ from .inference import evaluate
 from .utils import log_training_loss, log_training_results, print_times
 
 def do_train(
-        cfg,
+        args,
         model,
         train_loader,
         val_loader,
@@ -19,11 +19,11 @@ def do_train(
         scheduler,
         loss_fn,
 ):
-    log_period = cfg.SOLVER.LOG_PERIOD
-    checkpoint_period = cfg.SOLVER.CHECKPOINT_PERIOD
-    output_dir = cfg.OUTPUT_DIR
-    device = cfg.MODEL.DEVICE
-    epochs = cfg.SOLVER.MAX_EPOCHS
+    log_period = args.SOLVER.LOG_PERIOD
+    checkpoint_period = args.SOLVER.CHECKPOINT_PERIOD
+    output_dir = args.OUTPUT_DIR
+    device = args.MODEL.DEVICE
+    epochs = args.SOLVER.MAX_EPOCHS
 
     logger = logging.getLogger("template_model.train")
     logger.info("Start training")
