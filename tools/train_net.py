@@ -8,10 +8,12 @@ Template follow:
 
 import argparse
 from config.defaults import default_parser
-from config.config_utils import merge_from_yaml, merge_additional_args
+from config.extra_config import extra_config
 import os
 import sys
 from os import mkdir
+from pathlib import Path
+from typing import Any, Dict, List, Tuple, Union, Optional
 
 import torch.nn.functional as F
 
@@ -49,7 +51,9 @@ def train(args):
 
 def main():
     args = default_parser()
-    args = merge_from_yaml(args)
+    # Update duplicate properties in args using extra_config.
+    for key, value in vars(extra_config).items():
+        setattr(args, key, value)
 
     num_gpus = int(os.environ["WORLD_SIZE"]) if "WORLD_SIZE" in os.environ else 1
 

@@ -7,9 +7,13 @@ Template follow:
 """
 
 import argparse
+from config.defaults import default_parser
+from config.extra_config import extra_config
 import os
 import sys
 from os import mkdir
+from pathlib import Path
+from typing import Any, Dict, List, Tuple, Union, Optional
 
 import torch
 
@@ -22,14 +26,10 @@ from utils.logger import setup_logger
 
 
 def main():
-    parser = argparse.ArgumentParser(description="PyTorch Template MNIST Inference")
-    parser.add_argument(
-        "--config_file", default="", help="path to config file", type=str
-    )
-    parser.add_argument("opts", help="Modify config options using the command-line", default=None,
-                        nargs=argparse.REMAINDER)
-
-    args = parser.parse_args()
+    args = default_parser()
+    # Update duplicate properties in args using extra_config.
+    for key, value in vars(extra_config).items():
+        setattr(args, key, value)
 
     num_gpus = int(os.environ["WORLD_SIZE"]) if "WORLD_SIZE" in os.environ else 1
 
