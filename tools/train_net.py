@@ -7,17 +7,16 @@ Template follow:
 """
 
 import argparse
-from config.defaults import default_parser
-from config.extra_config import extra_config
+from typing import Any, Dict, List, Tuple, Union, Optional
+import torch.nn.functional as F
 import os
 import sys
-from os import mkdir
 from pathlib import Path
-from typing import Any, Dict, List, Tuple, Union, Optional
+work_dir = Path(__file__).resolve().parent.parent
+sys.path.append(work_dir)
 
-import torch.nn.functional as F
-
-sys.path.append('.')
+from config.defaults import default_parser
+from config.extra_config import extra_config
 from data import make_data_loader
 from engine.trainer import do_train
 from modeling import build_model
@@ -56,23 +55,12 @@ def main():
         setattr(args, key, value)
 
     num_gpus = int(os.environ["WORLD_SIZE"]) if "WORLD_SIZE" in os.environ else 1
-
-    if args.config_file != "":
-        args.merge_from_file(args.config_file)
-
-    output_dir = args.output_dir
-    if output_dir and not os.path.exists(output_dir):
-        mkdir(output_dir)
-
-    logger = setup_logger("template_model", output_dir, 0)
+    args.output_dir.mkdir(parents=True, exist_ok=True)
+    
+    logger = setup_logger("template_model", args.output_dir, 0)
     logger.info("Using {} GPUS".format(num_gpus))
     logger.info(args)
 
-    if args.config_file != "":
-        logger.info("Loaded configuration file {}".format(args.config_file))
-        with open(args.config_file, 'r') as cf:
-            config_str = "\n" + cf.read()
-            logger.info(config_str)
     logger.info("Running with config:\n{}".format(args))
 
     train(args)
