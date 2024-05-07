@@ -11,7 +11,7 @@ def default_parser():
     parser.add_argument("experiment_name", default="experiment_debug", help="Experiment name", type=str)
     parser.add_argument("checkpoint_path", default="logs/experiment_debug/checkpoints", help="Path to the checkpoint", type=str)
     parser.add_argument("output_dir", default="logs/experiment_debug", help="Output directory", type=str)
-    parser.add_argument("debug", default=True, help="Debug mode", type=bool)
+    parser.add_argument("debug", default=False, help="Debug mode", type=bool)
     parser.add_argument("config_file", default="", help="Path to the config file", type=str)  
 
     # -----------------------------------------------------------------------------

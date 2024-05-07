@@ -48,12 +48,7 @@ def train(args):
     )
 
 
-def main():
-    args = default_parser()
-    # Update duplicate properties in args using extra_config.
-    for key, value in vars(extra_config).items():
-        setattr(args, key, value)
-
+def main(args):
     num_gpus = int(os.environ["WORLD_SIZE"]) if "WORLD_SIZE" in os.environ else 1
     args.output_dir.mkdir(parents=True, exist_ok=True)
     
@@ -67,13 +62,19 @@ def main():
 
 
 if __name__ == '__main__':
-    import debugpy
-    try:
-        # 5678 is the default attach port in the VS Code debug configurations. Unless a host and port are specified, host defaults to 127.0.0.1
-        debugpy.listen(("localhost", 9501))
-        print("Waiting for debugger attach")
-        debugpy.wait_for_client()
-    except Exception as e:
-        pass
+    args = default_parser()
+    # Update duplicate properties in args using extra_config.
+    for key, value in vars(extra_config).items():
+        setattr(args, key, value)
+    
+    if args.debug:
+        import debugpy
+        try:
+            # 5678 is the default attach port in the VS Code debug configurations. Unless a host and port are specified, host defaults to 127.0.0.1
+            debugpy.listen(("localhost", 9501))
+            print("Waiting for debugger attach")
+            debugpy.wait_for_client()
+        except Exception as e:
+            pass
 
-    main()
+    main(args)
