@@ -1,32 +1,58 @@
-def log_training_loss(engine):
-    iter = (engine.state.iteration - 1) % len(train_loader) + 1
+import random
+import numpy as np
+import pandas as pd
+import torch
+import torch.nn.functional as F
 
-    if iter % log_period == 0:
-        logger.info("Epoch[{}] Iteration[{}/{}] Loss: {:.2f}"
-                    .format(engine.state.epoch, iter, len(train_loader), engine.state.metrics['avg_loss']))
+from functools import partial
+from itertools import islice
+from typing import Callable, List, Optional, Sequence, Union
+
+# -----------------------------------------------------------------------------------
+# All
+# -----------------------------------------------------------------------------------
+def random_seed(seed=42, rank=0):
+    torch.manual_seed(seed + rank)
+    np.random.seed(seed + rank)
+    random.seed(seed + rank)
+
+# -----------------------------------------------------------------------------------
+# train
+# -----------------------------------------------------------------------------------
+def do_resume(checkpoint_path, model, optimizer, args):
+    checkpoint = torch.load(checkpoint_path)
+    start_epoch = checkpoint["epoch"]
+    sd = checkpoint["state_dict"]
+    if next(iter(sd.items()))[0].startswith('module'):
+        sd = {k[len('module.'):]: v for k, v in sd.items()}
+    model.load_state_dict(sd)
+    if optimizer is not None:
+        optimizer.load_state_dict(checkpoint["optimizer"])
+    args.logger.info(f"=> resuming checkpoint '{args.resume}' (epoch {start_epoch})")
+    return model, optimizer, start_epoch
 
 
-def log_training_results(engine):
-    evaluator.run(train_loader)
-    metrics = evaluator.state.metrics
-    avg_accuracy = metrics['accuracy']
-    avg_loss = metrics['ce_loss']
-    logger.info("Training Results - Epoch: {} Avg accuracy: {:.3f} Avg Loss: {:.3f}"
-                .format(engine.state.epoch, avg_accuracy, avg_loss))
+class AverageMeter(object):
+    """Computes and stores the average and current value"""
 
-if val_loader is not None:
-    def log_validation_results(engine):
-        evaluator.run(val_loader)
-        metrics = evaluator.state.metrics
-        avg_accuracy = metrics['accuracy']
-        avg_loss = metrics['ce_loss']
-        logger.info("Validation Results - Epoch: {} Avg accuracy: {:.3f} Avg Loss: {:.3f}"
-                    .format(engine.state.epoch, avg_accuracy, avg_loss)
-                    )
+    def __init__(self):
+        self.reset()
 
-# adding handlers using `trainer.on` decorator API
-def print_times(engine):
-    logger.info('Epoch {} done. Time per batch: {:.3f}[s] Speed: {:.1f}[samples/s]'
-                .format(engine.state.epoch, timer.value() * timer.step_count,
-                        train_loader.batch_size / timer.value()))
-    timer.reset()
+    def reset(self):
+        self.val = 0
+        self.avg = 0
+        self.sum = 0
+        self.count = 0
+
+    def update(self, val, n=1):
+        self.val = val
+        self.sum += val * n
+        self.count += n
+        self.avg = self.sum / self.count
+        
+def unwrap_model(model):
+    if hasattr(model, 'module'):
+        return model.module
+    else:
+        return model
+

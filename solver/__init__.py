@@ -6,4 +6,4 @@ Template follow:
     https://github.com/yuanzhoulvpi2017/vscode_debug_transformers
 """
 
-from .build import make_optimizer
+from .build import make_optimizer, make_scheduler
