@@ -24,6 +24,10 @@ from engine.inference import inference
 from modeling import build_model
 from utils.logger import setup_logger
 
+from matplotlib import font_manager as fm, pyplot as plt
+font_path = '/mnt/c/Windows/Fonts/calibri.ttf'
+fm.fontManager.addfont(font_path)
+plt.rc('font', family='Calibri')
 
 def main():
     num_gpus = int(os.environ["WORLD_SIZE"]) if "WORLD_SIZE" in os.environ else 1

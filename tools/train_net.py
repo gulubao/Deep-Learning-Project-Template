@@ -27,6 +27,11 @@ from solver import make_optimizer, make_scheduler
 from utils.logger import setup_logger
 from engine.utils import random_seed, do_resume
 
+from matplotlib import font_manager as fm, pyplot as plt
+font_path = '/mnt/c/Windows/Fonts/calibri.ttf'
+fm.fontManager.addfont(font_path)
+plt.rc('font', family='Calibri')
+
 def train(args):
     model = build_model(
         args=args,
