@@ -1,4 +1,10 @@
 import argparse
+import logging
+import textwrap
+import os
+import sys
+from pathlib import Path
+
 
 def default_parser():
     parser = argparse.ArgumentParser(description="Default Configuration")
@@ -9,23 +15,13 @@ def default_parser():
     parser.add_argument("seed", default=42, help="Seed for random number generator", type=int)
     parser.add_argument("device", default="cuda", help="Device to use for training", type=str)
     parser.add_argument("experiment_name", default="experiment_debug", help="Experiment name", type=str)
-    parser.add_argument("checkpoint_path", default="logs/experiment_debug/checkpoints", help="Path to the checkpoint", type=str)
     parser.add_argument("output_dir", default="logs/experiment_debug", help="Output directory", type=str)
     parser.add_argument("debug", default=False, help="Debug mode", type=bool)
-    parser.add_argument("config_file", default="", help="Path to the config file", type=str)  
 
     # -----------------------------------------------------------------------------
     # Input Parameters
     # -----------------------------------------------------------------------------
     parser.add_argument("input_dir", default="", help="Path to the input directory", type=str)
-    parser.add_argument("input_raw_file", default="dataset/row_data/psam_h10.csv", help="Raw csv household-unit data file", type=str)
-    parser.add_argument("interest_column_file", default="dataset/row_data/interest_variables.xlsx", help="File containing the interested columns", type=str)
-    parser.add_argument("tmp_dir", default="dataset/tmp", help="File containing the interested columns", type=str)
-    parser.add_argument("input_train_house_file", default="dataset/processed_data/house_train.csv", help="Training house data file", type=str)
-    parser.add_argument("input_train_unit_file", default="dataset/processed_data/unit_train.csv", help="Training unit data file", type=str)
-    parser.add_argument("input_test_house_file", default="dataset/processed_data/house_test.csv", help="Testing house data file", type=str)
-    parser.add_argument("input_test_unit_file", default="dataset/processed_data/unit_test.csv", help="Testing unit data file", type=str)
-
     # -----------------------------------------------------------------------------
     # DataLoader
     # -----------------------------------------------------------------------------
@@ -43,8 +39,6 @@ def default_parser():
     parser.add_argument("weight_decay_bias", default=0, help="Weight decay bias", type=float)
 
     parser.add_argument("warmup_factor", default=1.0 / 3, help="Warmup factor", type=float)
-    parser.add_argument("warmup_iters", default=500, help="Warmup iterations", type=int)
-    parser.add_argument("warmup_method", default="linear", help="Warmup method", type=str)
 
     # -----------------------------------------------------------------------------
     # Training
@@ -58,7 +52,70 @@ def default_parser():
     # -----------------------------------------------------------------------------
     parser.add_argument("checkpoint", default="", help="Path to the checkpoint", type=str)
     parser.add_argument("inference_batch_size", default=16, help="Inference batch size", type=int)
+
+    # -----------------------------------------------------------------------------
+    # Update parser
+    # -----------------------------------------------------------------------------
     args = parser.parse_args()
+    args.output_dir = Path("logs").resolve() / args.experiment_name
+    args.output_dir.mkdir(parents=True, exist_ok=True)
+    
+    num_gpus = int(os.environ["WORLD_SIZE"]) if "WORLD_SIZE" in os.environ else 1
+    args.world_size = num_gpus
+    # --- other configurations --- # 
+
+
+    # --- log configurations --- #
+    args.logger = setup_logger("H-U Match ML:", args.output_dir, 0)
+    args.logger.info("Running with config:")
+    log_args_in_chunks(args, N=4, logger=args.logger)
     return args
     
     
+
+
+def setup_logger(name, save_dir, distributed_rank):
+    logger = logging.getLogger(name)
+    logger.setLevel(logging.DEBUG)
+    # don't log results for the non-master process
+    if distributed_rank > 0:
+        return logger
+    ch = logging.StreamHandler(stream=sys.stdout)
+    ch.setLevel(logging.DEBUG)
+    formatter = logging.Formatter("%(asctime)s %(name)s %(levelname)s: %(message)s")
+    ch.setFormatter(formatter)
+    logger.addHandler(ch)
+
+    if save_dir:
+        fh = logging.FileHandler(os.path.join(save_dir, "log.log"), mode='a+')
+        fh.setLevel(logging.DEBUG)
+        fh.setFormatter(formatter)
+        logger.addHandler(fh)
+
+    return logger
+
+def log_args_in_chunks(args, N=4, logger=None):
+    """
+    Logs the args in chunks of N parameters per line.
+    
+    Parameters:
+    args (argparse.Namespace): The arguments to be logged.
+    N (int): Number of parameters per line.
+    logger (logging.Logger): Logger object to use for logging.
+    """
+    if logger is None:
+        logger = logging.getLogger(__name__)
+    
+    # Convert args to a dictionary if it's not already
+    if not isinstance(args, dict):
+        args = vars(args)
+    
+    # Convert the args dictionary to a list of strings
+    args_list = ["{}={}".format(k, v) for k, v in args.items()]
+    
+    # Split the list into chunks of size N
+    chunks = [args_list[i:i + N] for i in range(0, len(args_list), N)]
+    
+    # Format each chunk and log it
+    for chunk in chunks:
+        logger.info("\n".join(textwrap.wrap(", ".join(chunk), width=120)))

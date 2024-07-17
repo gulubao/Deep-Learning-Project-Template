@@ -19,12 +19,10 @@ work_dir = Path(__file__).resolve().parent.parent
 sys.path.append(work_dir)
 
 from config.defaults import default_parser
-from config.extra_config import extra_config
 from data import make_data_loader
 from engine.trainer import do_train
 from modeling import build_model, create_loss
 from solver import make_optimizer, make_scheduler
-from utils.logger import setup_logger
 from engine.utils import random_seed, do_resume
 
 from matplotlib import font_manager as fm, pyplot as plt
@@ -78,20 +76,6 @@ def train(args):
 
 
 def main(args):
-    num_gpus = int(os.environ["WORLD_SIZE"]) if "WORLD_SIZE" in os.environ else 1
-    args.world_size = num_gpus
-    args.checkpoint_path = args.output_dir / "checkpoints"; args.checkpoint_path.mkdir(parents=True, exist_ok=True)
-
-    logger = setup_logger("TCL", args.output_dir, 0)
-    logger.info("Using {} GPUS".format(num_gpus))
-
-    if args.config_file != "":
-        logger.info("Loaded configuration file {}".format(args.config_file))
-        with open(args.config_file, 'r') as cf:
-            config_str = "\n" + cf.read()
-            logger.info("Extra Config:\n{}".format(config_str))
-    logger.info("Running with config:\n{}".format(args))
-    args.logger = logger
     random_seed(seed=args.seed, rank=0)
     if torch.cuda.is_available():
         # This enables tf32 on Ampere GPUs which is only 8% slower than
@@ -106,10 +90,6 @@ def main(args):
 
 if __name__ == '__main__':
     args = default_parser()
-    # Update duplicate properties in args using extra_config.
-    for key, value in vars(extra_config).items():
-        setattr(args, key, value)
-    
     if args.debug:
         import debugpy
         try:
