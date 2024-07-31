@@ -11,7 +11,20 @@
             "connect": {
                 "host": "localhost",
                 "port": 9501
-            }
+            },
+            "justMyCode": false,
+            "pathMappings": [ // Debug only into specific packages
+                {
+                    "localRoot": "${workspaceFolder}",
+                    "remoteRoot": "${workspaceFolder}"
+                },{
+                    "localRoot": "~/miniconda3/envs/tf/lib/python3.11/site-packages/transformers",
+                    "remoteRoot": "~/miniconda3/envs/tf/lib/python3.11/site-packages/transformers"
+                },{
+                    "localRoot": "~/miniconda3/envs/tf/lib/python3.11/site-packages/datasets",
+                    "remoteRoot": "~/miniconda3/envs/tf/lib/python3.11/site-packages/datasets"
+                }
+            ]
         }
     ]
 }
