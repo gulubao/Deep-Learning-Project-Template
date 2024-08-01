@@ -10,7 +10,7 @@
             "request": "attach",
             "connect": {
                 "host": "localhost",
-                "port": 9501
+                "port": 9501 // sudo lsof -i :9501 # 找出占用9501端口的进程
             },
             "justMyCode": false,
             "pathMappings": [ // Debug only into specific packages
