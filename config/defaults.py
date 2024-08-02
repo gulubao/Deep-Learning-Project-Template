@@ -122,7 +122,7 @@ def log_args_in_chunks(args, N=4, logger=None):
     for chunk in chunks:
         chunk_str = ", ".join(chunk)
         wrapped_lines = textwrap.wrap(chunk_str, width=120)
-        log_message.write("\n".join(wrapped_lines) + "\n")
+        log_message.write("\n\t".join(wrapped_lines) + "\n")
     
     # 一次性记录整个日志消息
-    args.logger.info("Running with config:\n{}".format(log_message.getvalue().strip()))
+    logger.info("{}".format(log_message.getvalue().strip()))
