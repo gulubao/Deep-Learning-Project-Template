@@ -5,6 +5,7 @@ import os
 import sys
 from pathlib import Path
 from io import StringIO
+from transformers import set_seed
 
 def default_parser():
     parser = argparse.ArgumentParser(description="Default Configuration")
@@ -66,22 +67,18 @@ def default_parser():
 
 
     # --- log configurations --- #
-    args.logger = setup_logger("H-U Match ML:", args.output_dir, 0)
+    args.logger = setup_logger("H-U Match ML:", args.output_dir)
     log_args_in_chunks(args, N=4, logger=args.logger)
+    set_seed(args.seed)
     return args
     
     
-
-
-def setup_logger(name, save_dir, distributed_rank):
+def setup_logger(name, save_dir):
     logger = logging.getLogger(name)
     logger.setLevel(logging.DEBUG)
-    # don't log results for the non-master process
-    if distributed_rank > 0:
-        return logger
     ch = logging.StreamHandler(stream=sys.stdout)
     ch.setLevel(logging.DEBUG)
-    formatter = logging.Formatter("%(asctime)s %(name)s %(levelname)s: %(message)s")
+    formatter = logging.Formatter("%(asctime)s %(name)s %(levelname)s: %(message)s", datefmt="%m/%d/%Y %H:%M:%S")
     ch.setFormatter(formatter)
     logger.addHandler(ch)
 
@@ -91,11 +88,10 @@ def setup_logger(name, save_dir, distributed_rank):
         fh.setFormatter(formatter)
         logger.addHandler(fh)
 
-    return logger
-
 def log_args_in_chunks(args, N=4, logger=None):
     """
-    将参数以每行N个参数的方式组织成一个字符串，然后一次性记录日志。
+    将参数以每行N个参数的方式组织成一个字符串, 然后一次性记录日志。
+    每个参数包括其名称和值。
     
     参数:
     args (argparse.Namespace): 要记录的参数。
@@ -105,24 +101,28 @@ def log_args_in_chunks(args, N=4, logger=None):
     if logger is None:
         logger = logging.getLogger(__name__)
     
-    # 如果args不是字典，将其转换为字典
+    args_name = args.__class__.__name__
     if not isinstance(args, dict):
         args = vars(args)
     
-    # 将args字典转换为字符串列表
-    args_list = ["{}={}".format(k, v) for k, v in args.items()]
-    
-    # 将列表分割成大小为N的块
-    chunks = [args_list[i:i + N] for i in range(0, len(args_list), N)]
+    # 将args字典转换为字符串列表，并找出最长的参数字符串
+    args_list = []
+    max_param_length = 0
+    for k, v in args.items():
+        param_str = f"{k} = {v}"
+        args_list.append(param_str)
+        max_param_length = max(max_param_length, len(param_str))
     
     # 使用StringIO来构建最终的日志消息
     log_message = StringIO()
-    log_message.write("Running with config:\n")
+    log_message.write(f"运行配置 - {args_name}:\n")
     
-    for chunk in chunks:
-        chunk_str = ", ".join(chunk)
-        wrapped_lines = textwrap.wrap(chunk_str, width=120)
-        log_message.write("\n\t".join(wrapped_lines) + "\n")
+    # 将参数列表分割成大小为N的块
+    for i in range(0, len(args_list), N):
+        chunk = args_list[i:i+N]
+        # 对齐每个参数
+        formatted_chunk = [f"{param:<{max_param_length}}" for param in chunk]
+        log_message.write("    " + "  ".join(formatted_chunk) + "\n")
     
     # 一次性记录整个日志消息
-    logger.info("{}".format(log_message.getvalue().strip()))
+    logger.info(log_message.getvalue().strip())
