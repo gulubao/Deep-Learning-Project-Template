@@ -6,8 +6,8 @@ free -m && sudo sh -c 'sync && echo 3 > /proc/sys/vm/drop_caches' && free -m
 
 # -- remove cache --#
 BASE_DIR="~/code/reproduce/Deep-Learning-Project-Template"
-find $BASE_DIR -type d -name "__pycache__" -exec rm -r {} + # Find and remove all __pycache__ directories
-echo "All __pycache__ directories under $BASE_DIR have been removed."
+find $BASE_DIR -type d -name "__pycache__" -not -path "*/reference/*" -exec rm -r {} + # 查找并删除所有__pycache__目录，但排除reference文件夹及其子文件夹
+echo "除reference文件夹外, $BASE_DIR下的所有__pycache__目录已被删除。"
 
 # -- debug --#
 free -m && sudo sh -c 'sync && echo 3 > /proc/sys/vm/drop_caches' && free -m
